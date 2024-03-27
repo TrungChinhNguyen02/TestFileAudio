@@ -2,6 +2,7 @@ package com.example.testfileaudio
 
 import android.content.ContentValues
 import android.content.Context
+import android.media.MediaScannerConnection
 import android.net.Uri
 import android.provider.MediaStore
 import android.view.LayoutInflater
@@ -102,18 +103,32 @@ class AudioAdapter(private val audioList: List<AudioModel>) :
 
     fun deleteAudio(context: Context, audioUri: Uri) {
         try {
-            val contentResolver = context.contentResolver
             val filePath = getFilePathFromUri(context, audioUri)
             if (filePath != null) {
                 val file = File(filePath)
                 if (file.exists()) {
                     file.delete()
+
+                    //scanfile MediaStore
+                    MediaScannerConnection.scanFile(
+                        context,
+                        arrayOf(file.absolutePath),
+                        null,
+                        object : MediaScannerConnection.OnScanCompletedListener {
+                            override fun onScanCompleted(path: String?, uri: Uri?) {
+                                Toast.makeText(context, "cập nhật thành công ", Toast.LENGTH_SHORT)
+                                    .show()
+                            }
+
+                        })
+
                 }
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
+
     private fun getFilePathFromUri(context: Context, uri: Uri): String? {
         val cursor = context.contentResolver.query(uri, null, null, null, null)
         var filePath: String? = null
@@ -134,5 +149,19 @@ class AudioAdapter(private val audioList: List<AudioModel>) :
 
     fun deleteAudio(position: Int) {
         notifyItemRemoved(position)
+    }
+
+    fun deleteFileAndUpdateMediaStore(context: Context, fileUri: Uri) {
+        try {
+            val fileToDelete = File(fileUri.path)
+            if (fileToDelete.exists()) {
+                fileToDelete.delete()
+
+                // Gửi tín hiệu để cập nhật MediaStore
+
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 }
